@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Traduction de site Web</title>
+    <meta charset="utf-8" />
+  </head>
+  <body id="text-to-translate">
+    <h1 id="text-to-translate">Bonjour!</h1>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script>
+      // Remplacez "YOUR_API_KEY" par votre clé d'API
+      gapi.load("client", function() {
+        gapi.client.setApiKey("YOUR_API_KEY");
+        gapi.client.load("https://content.googleapis.com/discovery/v1/apis/translate/v2/rest")
+          .then(function() {
+            // Utilisez l'API de géolocalisation de navigateur HTML5 pour détecter le pays de l'utilisateur
+            navigator.geolocation.getCurrentPosition(function(position) {
+              var lat = position.coords.latitude;
+              var lng = position.coords.longitude;
+
+              var url = "https://maps.googleapis.com/maps/api/geocode/json?latlng=" + lat + "," + lng + "&sensor=true";
+
+              $.getJSON(url, function(data) {
+                var country_code = null;
+                for (var i = 0; i < data.results[0].address_components.length; i++) {
+                  var component = data.results[0].address_components[i];
+                  if (component.types[0] == "country") {
+                    country_code = component.short_name;
+                    break;
+                  }
+                }
+
+                if (country_code) {
+                  // Appelez l'API de traduction avec le code de pays comme langue cible
+                  gapi.client.translate.translations.list({
+                    "q": document.getElementById("text-to-translate").textContent,
+                    "target": country_code
+                  }).then(function(response) {
+                    // Mettez à jour le texte de la page avec la traduction
+                    document.getElementById("text-to-translate").textContent = response.result.data.translations[0].translatedText;
+                  });
+                }
+              });
+            });
+          });
+      });
+    </script>
+  </body>
+</html>
